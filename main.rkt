@@ -38,39 +38,51 @@
               [else (loop (add1 i) stack jmp-tbl)]))])))
 
 
+;; Global variable to save standard BF tape length per the original spec
+;; change value here to affect the whole interpreter
+(define tape-length 30000)
+
 ;; Core function to implement execution logic for each of the 8 Brainfuck commands
 (define (run-interpreter source-code)
-  (define tape-length 30000) ; [cite: 2, 13]
   (define state (bf-state (make-vector tape-length 0) 0 0 (make-jump-table source-code)))
-  
+  ;; Here we use a "schemish" solution, maybe change to racket for
   (let loop ()
+    ;; Check if continue loop or source code is ended
     (when (< (bf-state-pc state) (string-length source-code))
       (let* ([instruction (string-ref source-code (bf-state-pc state))]
              [tape (bf-state-tape state)]
              [ac (bf-state-ac state)]
              [current-val (vector-ref tape ac)])        
         (case instruction
-          [(#\+) (vector-set! tape ac (modulo (add1 current-val) 256))] ;[cite: 28]
-          [(#\-) (vector-set! tape ac (modulo (sub1 current-val) 256))] ;[cite: 28]
+	  ;; Ince/dec current cell
+          [(#\+) (vector-set! tape ac (modulo (add1 current-val) 256))] 
+          [(#\-) (vector-set! tape ac (modulo (sub1 current-val) 256))]
+
+	  ;;Movement instruction
           [(#\>) (if (< ac (sub1 tape-length))
                      (set-bf-state-ac! state (add1 ac))
-                     (error "Pointer Overflow"))] ;[cite: 32]
+                     (error "Pointer Overflow"))] 
           [(#\<) (if (> ac 0)
                      (set-bf-state-ac! state (sub1 ac))
-                     (error "Pointer Underflow"))] ;[cite: 32]
-          [(#\.) (display (integer->char current-val)) (flush-output)] ;[cite: 29, 30]
+                     (error "Pointer Underflow"))]
+
+	  ;; Print/Read instructions
+          [(#\.) (display (integer->char current-val)) (flush-output)]
           [(#\,) (let ([in (read-char)])
-                   (vector-set! tape ac (if (eof-object? in) 0 (char->integer in))))] ;[cite: 31]
+                   (vector-set! tape ac (if (eof-object? in) 0 (char->integer in))))]
+
+	  ;; Jums instructions
           [(#\[) (when (zero? current-val)
-                   (set-bf-state-pc! state (hash-ref (bf-state-jump-table state) (bf-state-pc state))))] ;[cite: 33]
+                   (set-bf-state-pc! state (hash-ref (bf-state-jump-table state) (bf-state-pc state))))]
           [(#\]) (unless (zero? current-val)
-                   (set-bf-state-pc! state (hash-ref (bf-state-jump-table state) (bf-state-pc state))))] ;[cite: 33, 34]
-          [else (void)]) ; Ignore non-BF characters [cite: 52]
+                   (set-bf-state-pc! state (hash-ref (bf-state-jump-table state) (bf-state-pc state))))] 
+          [else (void)]) ; Ignore invalid BF characters 
         
-        (set-bf-state-pc! state (add1 (bf-state-pc state))) ;[cite: 10]
+        (set-bf-state-pc! state (add1 (bf-state-pc state))) 
         (loop)))))
 
-;; Entry point for script or binary execution [cite: 7, 11]
+
+;; Entry point for script or binary execution 
 (module+ main
   (command-line
    #:args (filename)
