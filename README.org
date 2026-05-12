@@ -38,6 +38,8 @@ following list containing:
 - Default tape length is 30,000 cells, defined as a named constant in each
   implementation.
   + TODO: Let the user set the tape length at start-time
+- Test directory contains some files woth simple BF source code to
+  test and check if it works
 
 ** Implementation
 
