@@ -1,0 +1,46 @@
+* Simple  BrainFuck Interpreter
+
+Implementing a simple Brainfuck interpreter in different languages as
+first toy proect to compare them
+
+** Goal
+
+My primary goal was to make a simple interpreter when starting to
+learn some languages by making something "functional" (first version
+will be just a toy project). The project was made by taking
+inspiration from the Python code in Ch 01 from Book:
+[[https://www.computersciencefromscratch.com/][Computer Science From Scratch]]
+
+The different implementations are made in different languages to
+highligth the differences and the ergonomicity in the languages and eventually help a
+beginner (myself included) choose one they prefer.
+
+First implementation will be made in Racket.
+
+** Project Overview
+
+A minimal Brainfuck interpreter that runs .bf programs from a file or
+stdin and prints output to stdout. It implements the eight Brainfuck
+commands (>, <, +, -, ., ,, [, ]) using a configurable(TODO) tape
+(default 30,000 cells) and simple error checks for unmatched brackets
+and pointer overflow.
+
+*** General implementation choices
+
+ATM the implementation it's about the only one done it in Racket. If
+some noteworthy differances are made they will be added t the
+following list containing:
+
+- Interpreter state is encapsulated in a struct (bf-state / bf-state record):
+  tape array, program counter, tape pointer, and jump table.
+- Source code is pre-parsed once into a hash-table "jump table" for bracket
+  matching, for efficiency and clean error reporting on unmatched brackets.
+- Default tape length is 30,000 cells, defined as a named constant in each
+  implementation.
+  + TODO: Let the user set the tape length at start-time
+
+** Implementation
+
+- Racket:
+  - Single self-contained file: src/bf-interpreter.rkt
+  - Run: =racket src/bf-interpreter.rkt <file.bf>=
