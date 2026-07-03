@@ -25,8 +25,8 @@ public class BfInterpreter{
 
 
     public BfInterpreter(String sourceCode) {
-	this.tape = new byte[TAPE_LENGTH];
-	this.jumpTable =  makeJumpTable(sourceCode);
+	this.tape = new int[TAPE_LENGTH];
+	// this.jumpTable =  makeJumpTable(sourceCode);
     }
 
 
@@ -69,8 +69,10 @@ public class BfInterpreter{
 	return res;
     }
 
+    
     private void runInterpreter (String sourceCode) {
-	//STUB
+	// I initially start by creating the jump table to use for the jump instructions
+	this.jumpTable =  makeJumpTable(sourceCode);
     }
 
     private String readSourceCode(String filePath) {

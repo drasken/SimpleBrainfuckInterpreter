@@ -2,11 +2,21 @@
 
 (require racket/cmdline)
 
+;;;; GLOBAL DATA DEFINIITONS
+
 ;; Data structure to encapsulate the interpreter state
 (struct bf-state (tape  ; array that hold "world" data
 		  [pc #:mutable]  ; program counter index
 		  [ac #:mutable]  ; array pointer
 		  jump-table))  ; pre-parsed table for jump instructions
+
+
+;; Global variable to save standard BF tape length per the original spec
+;; change value here to affect the whole interpreter
+(define tape-length 30000)
+
+
+;;;; FUNCTIONS DEFINITIONS
 
 ;; Pre-parse function to create the jump table for [ and ] char
 ;; Since each nested [ correspond  to another ]
@@ -37,10 +47,6 @@
               ;; Ignore all other characters, now just parsing for brackets
               [else (loop (add1 i) stack jmp-tbl)]))])))
 
-
-;; Global variable to save standard BF tape length per the original spec
-;; change value here to affect the whole interpreter
-(define tape-length 30000)
 
 ;; Core function to implement execution logic for each of the 8 Brainfuck commands
 (define (run-interpreter source-code)
