@@ -44,5 +44,13 @@ following list containing:
 ** Implementation
 
 - Racket:
-  - Single self-contained file: src/bf-interpreter.rkt
-  - Run: =racket src/bf-interpreter.rkt <file.bf>=
+  - Single self-contained file: bf-interpreter.rkt
+  - Run: =racket bf-interpreter.rkt <file.bf>=
+
+- Java:
+  - Single self-contained file: BfInterpreter.java
+  - Run: =javac BfInterpreter.java && java BfInterpreter <file.bf>=
+
+- Guile:
+  - Single self-contained file: bf-interpreter-guile.scm
+  - Run: =guile3.0 bf-interpreter-guile.scm <file.bf>=
