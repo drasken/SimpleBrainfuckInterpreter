@@ -2,11 +2,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.HashMap;
-// TODO: decide wich to use in temp stack for jump table
 import java.util.LinkedList;
-import java.util.ArrayDeque;
-import java.util.Deque;
-//
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 
@@ -15,27 +11,28 @@ import java.nio.file.NoSuchFileException;
    This class implement a simple Brainfuck interpreter.
 */
 public class BfInterpreter{
-    
+
     // All fields to encapsulate the interpreter state
     private int[] tape;  // represented as an array of bytes
     private static final int TAPE_LENGTH = 30000;  // standard tape length per the original spec
     private char[] sourceCode;
     private int pc = 0;  // program counter, count instructions
     private int ac = 0;  // array pointer, indexing on tape
-    private Map<Integer, Integer> jumpTable;  // used to save indexes of code's brackets 
+    private Map<Integer, Integer> jumpTable;  // used to save indexes of code's brackets
 
 
-    public BfInterpreter(String sourceCode) {
+    public BfInterpreter(String filePath) {
 	this.tape = new int[TAPE_LENGTH];
-	this.sourceCode = readSourceCode(sourceCode);
-	this.jumpTable =  makeJumpTable(sourceCode);
+	this.sourceCode = readSourceCode(filePath);
+	this.jumpTable = makeJumpTable(this.sourceCode);
     }
 
 
     /**
-       Method used to read the BF source code to execute. 
+       Method used to read the BF source code to execute.
     */
     private char[] readSourceCode(String filePath) {
+	String content;
 
 	try {
 	    content = Files.readString(Path.of(filePath));
@@ -47,7 +44,7 @@ public class BfInterpreter{
 
 	return content.toCharArray();
     }
-    
+
 
 
     /**
@@ -56,96 +53,111 @@ public class BfInterpreter{
        to each opening [ of pos x and the corresponding ] of pos y
        a pair x: y is saved and vice versas
     */
-    private Map<Integer, Integer> makeJumpTable(String sourceCode) {
-	
-	LinkedList<Integer> myStack = new LinkedList<>();  // Used as a temporary "stack" 
-	int pos = 0;  // keep track of the char index
+    private Map<Integer, Integer> makeJumpTable(char[] sourceCode) {
+
+	LinkedList<Integer> myStack = new LinkedList<>();  // Used as a temporary "stack"
 	Map<Integer, Integer> res = new HashMap<>();
 
-	for (char c : sourceCode.toCharArray()){
+	for (int pos = 0; pos < sourceCode.length; pos++) {
+	    char c = sourceCode[pos];
 	    if (c == '[') {
 		myStack.addLast(pos);
-		pos++;
 	    } else if (c == ']') {
 		if (myStack.isEmpty()) {
 		    throw new IllegalArgumentException("Unmatched ']' at position " + pos);
 		}
-		// first add pos for [
-		res.put(myStack.getLast(), pos);
-		// second add pos for ]
-		res.put(pos, myStack.removeLast());
-		// increment index
-		pos++;
-	    } else {
-		pos++;
+		int openPos = myStack.removeLast();
+		res.put(openPos, pos);
+		res.put(pos, openPos);
 	    }
 	}
 
 	// Safeguard, check if stack is empty
 	if (!myStack.isEmpty()) {
-	    throw new IllegalArgumentException("Unmatched '[' in source");
+	    throw new IllegalArgumentException("Unmatched '[' at position " + myStack.getLast());
 	}
 	return res;
     }
 
 
     /**
-       Core function used to implement the execution logic for all the 8 commands
+       Core function used to implement the execution logic for all the 8 BF commands
     */
-    private void runInterpreter (String sourceCode) {
-	// I initially start by creating the jump table to use for the jump instructions
-	this.jumpTable =  makeJumpTable(sourceCode);
-
+    private void runInterpreter() {
 	// Run the code until all instructions are executed
-	while (this.pc < this.tape.length) {
+	while (this.pc < this.sourceCode.length) {
 	    char instruction = this.sourceCode[this.pc];
-	    // TODO: finish implement cases
+
 	    switch (instruction) {
-		// inc/dec instructions
-	    case  '+':
-		this.ac++;
-		this.pc++;
+		// inc/dec current cell, both operations are mod 256
+	    case '+':
+		this.tape[this.ac] = (this.tape[this.ac] + 1) % 256;
 		break;
-	    case  '-':
-		this.ac--;		
-		this.pc++;
+	    case '-':
+		this.tape[this.ac] = (this.tape[this.ac] + 255) % 256;
 		break;
-		// movements instructions
-	    case  '<':
-		if (this.ac < (TAPE_LENGTH - 1) {
-			this.ac++;
-			this.pc++;
-		    } else {
-			throw new Exception("Pointer Overflow");
-		    }		    
-		    break;
-		    case  '>':
-		    if (this.ac > 0) {
-			    this.ac--;
-			    this.pc++;
-			} else {
-			    throw new Exception("Pointer Underflow");
-			}		    
-			break;
-			// print/read instructions
-			case  '.':
-			break;
-			case  ',':
-			break;
-			// jump instructions
-			case  '[':		
-			break;
-			case  ']':
-			break;
-			// ignore every other characters
-			default:
-			continue;
-			}
-		    }
+		// movement instructions
+	    case '>':
+		if (this.ac < TAPE_LENGTH - 1) {
+		    this.ac++;
+		} else {
+		    throw new RuntimeException("Pointer Overflow");
+		}
+		break;
+	    case '<':
+		if (this.ac > 0) {
+		    this.ac--;
+		} else {
+		    throw new RuntimeException("Pointer Underflow");
+		}
+		break;
+		// print/read instructions
+	    case '.':
+		System.out.print((char) this.tape[this.ac]);
+		System.out.flush();  // force the command execution from buffer to terminal immediately
+		break;
+	    case ',':
+		int input;
+		try {
+		    input = System.in.read();
+		} catch (IOException e) {
+		    throw new RuntimeException("Error reading input", e);
+		}
+		this.tape[this.ac] = (input == -1) ? 0 : input;
+		break;
+		// jump instructions
+	    case '[':
+		if (this.tape[this.ac] == 0) {
+		    this.pc = this.jumpTable.get(this.pc);
+		}
+		break;
+	    case ']':
+		if (this.tape[this.ac] != 0) {
+		    this.pc = this.jumpTable.get(this.pc);
+		}
+		break;
+		// ignore every other characters
+	    default:
+		break;
 	    }
 
+	    this.pc++;  // advance to next instruction
+	}
+    }
 
+
+    /**
+       Main function that work as an entry point for using this interpreter.
+       Pass the source code file as argument, else print a minimal help string
+     */
     public static void main (String[] args) {
-	//STUB
+	// Only the source code file is expected
+	if (args.length != 1) {
+	    System.out.println("Usage: java BfInterpreter <file.bf>");
+	    return;
+	}
+	
+	BfInterpreter interpreter = new BfInterpreter(args[0]);
+	interpreter.runInterpreter();
     }
 }
