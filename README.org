@@ -54,3 +54,10 @@ following list containing:
 - Guile:
   - Single self-contained file: bf-interpreter-guile.scm
   - Run: =guile3.0 bf-interpreter-guile.scm <file.bf>=
+
+- Common Lisp:
+  - Single self-contained file: bf-interpreter.lisp (package =bf-interpreter=, nickname =bf=)
+  - Uses UIOP (bundled with ASDF) for command line args and file reading,
+    so no it's not implementation specific and more portable
+  - Run with SBCL: =sbcl --noinform --non-interactive --load bf-interpreter.lisp --eval '(bf:main)' <file.bf>=
+  - From the REPL: =(load "bf-interpreter.lisp")= then =(bf:main '("Test/fib.bf"))=
